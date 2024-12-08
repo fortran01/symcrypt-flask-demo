@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Symmetric Encryption Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        #output {
+            white-space: pre-wrap;
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Symmetric Encryption Demo</h1>
+        <p>This demo shows hierarchical key management with Master Keys, KEKs, and DEKs</p>
+        
+        <div class="section">
+            <h3>Create Encrypted Session</h3>
+            <textarea id="userData" placeholder="Enter data to encrypt" rows="4"></textarea>
+            <button onclick="createSession()">Encrypt and Store</button>
+        </div>
+
+        <div class="section">
+            <h3>Session Operations</h3>
+            <button onclick="getSession()">Get Decrypted Session Data</button>
+            <button onclick="rotateKek()">Rotate KEK</button>
+        </div>
+
+        <div class="section">
+            <h3>Output</h3>
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <script>
+        function appendOutput(text) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toLocaleTimeString() + ': ' + text + '\n';
+        }
+
+        async function createSession() {
+            const userData = document.getElementById('userData').value;
+            try {
+                const response = await fetch('/create_session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ user_data: userData }),
+                });
+                const data = await response.json();
+                appendOutput('Session created with KEK ID: ' + data.kek_id);
+            } catch (error) {
+                appendOutput('Error: ' + error);
+            }
+        }
+
+        async function getSession() {
+            try {
+                const response = await fetch('/get_session');
+                const data = await response.json();
+                if (data.error) {
+                    appendOutput('Error: ' + data.error);
+                } else {
+                    appendOutput('Decrypted data: ' + data.decrypted_data);
+                    appendOutput('Using KEK ID: ' + data.kek_id);
+                }
+            } catch (error) {
+                appendOutput('Error: ' + error);
+            }
+        }
+
+        async function rotateKek() {
+            try {
+                const response = await fetch('/rotate_kek', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.error) {
+                    appendOutput('Error: ' + data.error);
+                } else {
+                    appendOutput('KEK rotated: ' + data.old_kek_id + ' → ' + data.new_kek_id);
+                }
+            } catch (error) {
+                appendOutput('Error: ' + error);
+            }
+        }
+    </script>
+</body>
+</html>
