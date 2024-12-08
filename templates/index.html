@@ -89,7 +89,11 @@
                     body: JSON.stringify({ user_data: userData }),
                 });
                 const data = await response.json();
-                appendOutput('Session created with KEK ID: ' + data.kek_id);
+                if (data.error) {
+                    appendOutput('Error: ' + data.error);
+                } else {
+                    appendOutput(data.message + ' (KEK ID: ' + data.kek_id + ')');
+                }
             } catch (error) {
                 appendOutput('Error: ' + error);
             }
@@ -102,8 +106,8 @@
                 if (data.error) {
                     appendOutput('Error: ' + data.error);
                 } else {
-                    appendOutput('Decrypted data: ' + data.decrypted_data);
-                    appendOutput('Using KEK ID: ' + data.kek_id);
+                    const decryptedData = data.decrypted_data || data.data;
+                    appendOutput('Decrypted data: ' + decryptedData);
                 }
             } catch (error) {
                 appendOutput('Error: ' + error);
@@ -113,13 +117,16 @@
         async function rotateKek() {
             try {
                 const response = await fetch('/rotate_kek', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
                 const data = await response.json();
                 if (data.error) {
                     appendOutput('Error: ' + data.error);
                 } else {
-                    appendOutput('KEK rotated: ' + data.old_kek_id + ' → ' + data.new_kek_id);
+                    appendOutput(data.message + ' (Old KEK ID: ' + data.old_kek_id + ', New KEK ID: ' + data.new_kek_id + ')');
                 }
             } catch (error) {
                 appendOutput('Error: ' + error);
